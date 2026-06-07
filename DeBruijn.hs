@@ -36,7 +36,7 @@ toDB ctx (Var x) = case elemIndex x ctx of
   Nothing -> DBFree x
 toDB ctx (App e1 e2) = DBApp (toDB ctx e1) (toDB ctx e2)
 toDB ctx (Abs x e) = DBAbs x (toDB (x : ctx) e)
-toDB ctx (Macro m) = DBFree m
+toDB _ (Macro m) = DBFree m
 
 -- 4.2.
 -- inverse of toDB
@@ -46,7 +46,7 @@ toDB ctx (Macro m) = DBFree m
 -- dbabs pushes name onto ctx then recurses building abs x of the result
 fromDB :: Context -> DeBruijn -> Lambda
 fromDB ctx (DBVar n) = Var (ctx !! n)
-fromDB ctx (DBFree x) = Var x
+fromDB _ (DBFree x) = Var x
 fromDB ctx (DBApp e1 e2) = App (fromDB ctx e1) (fromDB ctx e2)
 fromDB ctx (DBAbs x e) = Abs x (fromDB (x : ctx) e)
 
