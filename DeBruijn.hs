@@ -91,10 +91,8 @@ subst target val (DBVar n)
   | n > target = DBVar (n - 1)
   | otherwise = DBVar n
 subst _ _ (DBFree x) = DBFree x
-subst target val (DBApp e1 e2) =
-  DBApp (subst target val e1) (subst target val e2)
-subst target val (DBAbs x e) =
-  DBAbs x (subst (target + 1) (shift 1 0 val) e)
+subst target val (DBApp e1 e2) = DBApp (subst target val e1) (subst target val e2)
+subst target val (DBAbs x e) = DBAbs x (subst (target + 1) (shift 1 0 val) e)
 
 -- 4.4.
 -- one beta step is substitute val for index 0
