@@ -28,7 +28,6 @@ instance Eq Lambda where
       eq _ _ _ = False
 
 -- 1.1.
--- pattern match the 4 constructors
 -- var x is singleton list of x
 -- app nub of recursing on both sides concatenated
 -- abs nub of binder name cons recurse on body

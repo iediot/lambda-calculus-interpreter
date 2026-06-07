@@ -62,20 +62,6 @@ isNormalForm (DBApp (DBAbs _ _) _) = False
 isNormalForm (DBApp e1 e2) = isNormalForm e1 && isNormalForm e2
 isNormalForm (DBAbs _ e) = isNormalForm e
 
--- add d to every free index inside e
--- d stays constant cutoff grows as we descend under binders
--- dbvar n if n >= cutoff bump by d else leave alone
--- dbfree unchanged
--- dbapp recurses on both with same d and cutoff
--- dbabs recurses on body with cutoff + 1 because we just passed a binder
-shift :: Int -> Int -> DeBruijn -> DeBruijn
-shift d cutoff (DBVar n)
-  | n >= cutoff = DBVar (n + d)
-  | otherwise = DBVar n
-shift _ _ (DBFree x) = DBFree x
-shift d cutoff (DBApp e1 e2) = DBApp (shift d cutoff e1) (shift d cutoff e2)
-shift d cutoff (DBAbs x e) = DBAbs x (shift d (cutoff + 1) e)
-
 -- replace index target with val inside e
 -- dbvar n if n equals target return val
 --        if n is bigger drop by 1 because a binder is being removed
@@ -83,8 +69,6 @@ shift d cutoff (DBAbs x e) = DBAbs x (shift d (cutoff + 1) e)
 -- dbfree unchanged
 -- dbapp recurses on both with same target and val
 -- dbabs under a new binder target grows by 1
---      and val must be shifted by 1 from cutoff 0
---      so its free indices still point to the same outer binders
 subst :: Int -> DeBruijn -> DeBruijn -> DeBruijn
 subst target val (DBVar n)
   | n == target = val
