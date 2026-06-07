@@ -19,7 +19,7 @@ newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 instance Functor Parser where
   fmap f (Parser p) = Parser $ \s -> case p s of
     Just (a, rest) -> Just (f a, rest)
-    Nothing        -> Nothing
+    Nothing -> Nothing
 
 -- pure x returns a parser that consumes nothing and yields x
 -- <*> runs pf to get a function and remaining input
@@ -28,9 +28,9 @@ instance Functor Parser where
 instance Applicative Parser where
   pure x = Parser $ \s -> Just (x, s)
   Parser pf <*> Parser pa = Parser $ \s -> case pf s of
-    Nothing      -> Nothing
+    Nothing -> Nothing
     Just (f, r1) -> case pa r1 of
-      Nothing      -> Nothing
+      Nothing -> Nothing
       Just (a, r2) -> Just (f a, r2)
 
 -- bind runs p on input
@@ -38,7 +38,7 @@ instance Applicative Parser where
 -- on the leftover input
 instance Monad Parser where
   Parser p >>= f = Parser $ \s -> case p s of
-    Nothing        -> Nothing
+    Nothing -> Nothing
     Just (a, rest) -> parse (f a) rest
 
 -- empty is the parser that always fails
@@ -48,7 +48,7 @@ instance Alternative Parser where
   empty = Parser $ const Nothing
   Parser p <|> Parser q = Parser $ \s -> case p s of
     Just result -> Just result
-    Nothing     -> q s
+    Nothing -> q s
 
 -- look at the input
 -- if it starts with a char satisfying pred consume it and return it with the rest
@@ -56,7 +56,7 @@ instance Alternative Parser where
 sat :: (Char -> Bool) -> Parser Char
 sat pred = Parser $ \s -> case s of
   c : rest | pred c -> Just (c, rest)
-  _                 -> Nothing
+  _ -> Nothing
 
 -- sat for equality with one specific char
 ch :: Char -> Parser Char
@@ -86,7 +86,7 @@ atom = parens <|> (Var <$> varName) <|> (Macro <$> macroName)
 app :: Parser Lambda
 app = do
   first <- atom
-  rest  <- many (ch ' ' >> atom)
+  rest <- many (ch ' ' >> atom)
   pure (foldl App first rest)
 
 -- do block consume \ then varname then . then parse a lambda body
@@ -110,7 +110,7 @@ lambda = abst <|> app
 parseLambda :: String -> Lambda
 parseLambda s = case parse lambda s of
   Just (e, "") -> e
-  _            -> error "parse error"
+  _ -> error "parse error"
 
 -- 3.3.
 -- a line is a binding or an eval of a lambda
@@ -120,7 +120,7 @@ parseLambda s = case parse lambda s of
 parseLine :: String -> Either String Line
 parseLine s = case parse line s of
   Just (l, "") -> Right l
-  _            -> Left s
+  _ -> Left s
   where
     line = binding <|> (Eval <$> lambda)
     binding = do

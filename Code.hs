@@ -20,7 +20,7 @@ instance Show Line where
 -- var is unchanged returned as right
 expand :: Context -> Lambda -> Either String Lambda
 expand ctx (Macro name) = case lookup name ctx of
-  Just e  -> expand ctx e
+  Just e -> expand ctx e
   Nothing -> Left name
 expand ctx (App e1 e2) = do
   e1' <- expand ctx e1
@@ -38,7 +38,7 @@ expand _ (Var x) = Right (Var x)
 -- right wraps simplify step expanded back in right
 simplifyCtx :: Context -> (Lambda -> Lambda) -> Lambda -> Either String [Lambda]
 simplifyCtx ctx step e = case expand ctx e of
-  Left name      -> Left name
+  Left name -> Left name
   Right expanded -> Right (simplify step expanded)
 
 normalCtx :: Context -> Lambda -> Either String [Lambda]

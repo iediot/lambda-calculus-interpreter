@@ -32,11 +32,11 @@ instance Eq DeBruijn where
 -- macro becomes dbfree of its name
 toDB :: Context -> Lambda -> DeBruijn
 toDB ctx (Var x) = case elemIndex x ctx of
-  Just n  -> DBVar n
+  Just n -> DBVar n
   Nothing -> DBFree x
 toDB ctx (App e1 e2) = DBApp (toDB ctx e1) (toDB ctx e2)
 toDB ctx (Abs x e) = DBAbs x (toDB (x : ctx) e)
-toDB _   (Macro m) = DBFree m
+toDB _ (Macro m) = DBFree m
 
 -- 4.2.
 -- inverse of toDB
@@ -46,7 +46,7 @@ toDB _   (Macro m) = DBFree m
 -- dbabs pushes name onto ctx then recurses building abs x of the result
 fromDB :: Context -> DeBruijn -> Lambda
 fromDB ctx (DBVar n) = Var (ctx !! n)
-fromDB _   (DBFree x) = Var x
+fromDB _ (DBFree x) = Var x
 fromDB ctx (DBApp e1 e2) = App (fromDB ctx e1) (fromDB ctx e2)
 fromDB ctx (DBAbs x e) = Abs x (fromDB (x : ctx) e)
 
@@ -72,7 +72,7 @@ shift :: Int -> Int -> DeBruijn -> DeBruijn
 shift d cutoff (DBVar n)
   | n >= cutoff = DBVar (n + d)
   | otherwise = DBVar n
-shift _ _      (DBFree x) = DBFree x
+shift _ _ (DBFree x) = DBFree x
 shift d cutoff (DBApp e1 e2) = DBApp (shift d cutoff e1) (shift d cutoff e2)
 shift d cutoff (DBAbs x e) = DBAbs x (shift d (cutoff + 1) e)
 
@@ -90,7 +90,7 @@ subst target val (DBVar n)
   | n == target = val
   | n > target = DBVar (n - 1)
   | otherwise = DBVar n
-subst _      _   (DBFree x) = DBFree x
+subst _ _ (DBFree x) = DBFree x
 subst target val (DBApp e1 e2) =
   DBApp (subst target val e1) (subst target val e2)
 subst target val (DBAbs x e) =
@@ -130,7 +130,7 @@ applicativeStep (DBApp e1 e2)
   | not (isNormalForm e2) = DBApp e1 (applicativeStep e2)
   | otherwise = case e1 of
       DBAbs _ body -> reduce e2 body
-      _            -> DBApp e1 e2
+      _ -> DBApp e1 e2
 applicativeStep (DBAbs x e) = DBAbs x (applicativeStep e)
 applicativeStep e = e
 
