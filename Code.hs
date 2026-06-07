@@ -5,16 +5,19 @@ import Lambda
 type Context = [(String, Lambda)]
 
 data Line
-  = Eval Lambda
+ = Eval Lambda
   | Binding String Lambda
   deriving (Eq)
 
 instance Show Line where
-  show (Eval l)      = show l
+  show (Eval l) = show l
   show (Binding s l) = s ++ " = " ++ show l
 
--- replace every Macro node by its definition from the context
--- returns Left name if a macro is missing
+-- walk the tree and replace every macro by its definition
+-- macro name lookup the name in ctx if found recurse on the definition else left name
+-- app do block expand both children then rebuild with app
+-- abs do block expand body then rebuild with abs x
+-- var is unchanged returned as right
 expand :: Context -> Lambda -> Either String Lambda
 expand ctx (Macro name) = case lookup name ctx of
   Just e  -> expand ctx e
@@ -29,7 +32,10 @@ expand ctx (Abs x e) = do
 expand _ (Var x) = Right (Var x)
 
 -- 3.1.
--- expand macros first then run simplify with the chosen step
+-- expand first then simplify
+-- case on expand result
+-- left passes the missing macro name through
+-- right wraps simplify step expanded back in right
 simplifyCtx :: Context -> (Lambda -> Lambda) -> Lambda -> Either String [Lambda]
 simplifyCtx ctx step e = case expand ctx e of
   Left name      -> Left name
