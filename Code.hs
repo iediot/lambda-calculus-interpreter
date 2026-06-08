@@ -13,7 +13,7 @@ instance Show Line where
   show (Eval l) = show l
   show (Binding s l) = s ++ " = " ++ show l
 
--- var right, app expand both, abs ab the same
+-- pm var right, app expand both, abs ab the same
 expand :: Context -> Lambda -> Either String Lambda
 expand _ (Var x) = Right (Var x)
 expand ctx (App e1 e2) = do

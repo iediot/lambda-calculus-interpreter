@@ -62,13 +62,13 @@ ch c = sat (== c)
 varName :: Parser String
 varName = some (sat isLower)
 
--- sat iMC w iU/iD
+-- sat iMCh w iU/iD
 macroName :: Parser String
 macroName = some (sat isMacroChar)
   where
     isMacroChar c = isUpper c || isDigit c
 
--- |$|$| (lambda) pure
+-- |$|$| pm(lambdapm) pure
 atom :: Parser Lambda
 atom = parens <|> (Var <$> varName) <|> (Macro <$> macroName)
   where
@@ -85,7 +85,7 @@ app = do
   rest <- many (ch ' ' >> atom)
   pure (foldl App first rest)
 
--- \\ v . bl
+-- \\ v pm. b l
 abst :: Parser Lambda
 abst = do
   _ <- ch '\\'
@@ -106,7 +106,7 @@ parseLambda s = case parse lambda s of
   _ -> error "parse error"
 
 -- 3.3.
--- case parse line s rlls 
+-- case parse line s rlls binding
 parseLine :: String -> Either String Line
 parseLine s = case parse line s of
   Just (l, "") -> Right l

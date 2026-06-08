@@ -28,7 +28,7 @@ instance Eq Lambda where
       eq _ _ _ = False
 
 -- 1.1.
--- for app and abs USE nub and macro is empty list
+-- for app and abs use NUB and macro is empty list
 vars :: Lambda -> [String]
 vars (Var x) = [x]
 vars (App e1 e2) = nub (vars e1 ++ vars e2)
@@ -45,7 +45,7 @@ freeVars (Macro _) = []
 
 -- 1.3.
 -- `notElem` !!!
--- letters a-z, namesOfLength, and for allNames use concat
+-- letters a-z, namesOfLength, and for allNames use CONCAT
 newVar :: [String] -> String
 newVar taken = head [name | name <- allNames, name `notElem` taken]
   where
@@ -56,7 +56,7 @@ newVar taken = head [name | name <- allNames, name `notElem` taken]
     allNames = concat [namesOfLength n | n <- [1 ..]]
 
 -- 1.4.
--- var true, appabs false, app yk, abs yk, macro false
+-- var true, appabs false, app yk, abs yk, macro false, pm all ex e
 isNormalForm :: Lambda -> Bool
 isNormalForm (Var _) = True
 isNormalForm (App (Abs _ _) _) = False
@@ -65,7 +65,7 @@ isNormalForm (Abs _ e) = isNormalForm e
 isNormalForm (Macro _) = True
 
 -- 1.5.
--- var e or var y, app the usual i reduce, abs the big one with fresh, and _macro_
+-- var ey, app reduce both, abs xy then y notelem then redo body and newvar, pm macro
 reduce :: String -> Lambda -> Lambda -> Lambda
 reduce x (Var y) e
   | x == y = e
@@ -82,7 +82,7 @@ reduce x (Abs y body) e
 reduce _ (Macro m) _ = Macro m
 
 -- 1.6.
--- appabs, app the usual, abs and ee
+-- app abs reduce xbodyarg, app check each if normal, abs normal e, ee
 normalStep :: Lambda -> Lambda
 normalStep (App (Abs x body) arg) = reduce x body arg
 normalStep (App e1 e2)
@@ -92,7 +92,7 @@ normalStep (Abs x e) = Abs x (normalStep e)
 normalStep e = e
 
 -- 1.7.
--- appabs but both body and arg, app as usual, abs and ee
+-- app abs check both body and arg, app check each, abs normal e, ee
 applicativeStep :: Lambda -> Lambda
 applicativeStep (App (Abs x body) arg)
   | isNormalForm body && isNormalForm arg = reduce x body arg
@@ -103,7 +103,7 @@ applicativeStep (Abs x e) = Abs x (applicativeStep e)
 applicativeStep e = e
 
 -- 1.8.
--- infe or simplidy step
+-- check normal else simplify
 simplify :: (Lambda -> Lambda) -> Lambda -> [Lambda]
 simplify step e
   | isNormalForm e = [e]

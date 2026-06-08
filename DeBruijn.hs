@@ -25,8 +25,8 @@ instance Eq DeBruijn where
   _ == _ = False
 
 -- 4.1.
--- remember to use db not regular, var just and nothing, 
--- app usual abs kinda usual macro easy
+-- remember to use db not regular, var case elem just
+-- and nothing, app usual abs kinda usual pm macro easy
 toDB :: Context -> Lambda -> DeBruijn
 toDB ctx (Var x) = case elemIndex x ctx of
   Just n -> DBVar n
@@ -37,7 +37,7 @@ toDB _ (Macro m) = DBFree m
 
 -- 4.2.
 -- inverse of todb, again remember db
--- ctx !! n, free, app and abs
+-- ctx !! n, pm in free, app and abs
 fromDB :: Context -> DeBruijn -> Lambda
 fromDB ctx (DBVar n) = Var (ctx !! n)
 fromDB _ (DBFree x) = Var x
@@ -45,6 +45,7 @@ fromDB ctx (DBApp e1 e2) = App (fromDB ctx e1) (fromDB ctx e2)
 fromDB ctx (DBAbs x e) = Abs x (fromDB (x : ctx) e)
 
 -- 4.3.
+-- all except app pattern matched
 -- dbvft, appabs false, app usual abs kinda usual
 isNormalForm :: DeBruijn -> Bool
 isNormalForm (DBVar _) = True
@@ -53,7 +54,7 @@ isNormalForm (DBApp (DBAbs _ _) _) = False
 isNormalForm (DBApp e1 e2) = isNormalForm e1 && isNormalForm e2
 isNormalForm (DBAbs _ e) = isNormalForm e
 
--- if = if >, __, app usual abs diff but easy
+-- if = if >, pm both free, app usual abs diff but easy
 subst :: Int -> DeBruijn -> DeBruijn -> DeBruijn
 subst target val (DBVar n)
   | n == target = val
@@ -68,7 +69,7 @@ reduce :: DeBruijn -> DeBruijn -> DeBruijn
 reduce = subst 0
 
 -- 4.5.
--- _baab, app we check each, abse and ee
+-- pm body arg, app we check each, abse and ee
 normalStep :: DeBruijn -> DeBruijn
 normalStep (DBApp (DBAbs _ body) arg) = reduce arg body
 normalStep (DBApp e1 e2)
@@ -78,19 +79,18 @@ normalStep (DBAbs x e) = DBAbs x (normalStep e)
 normalStep e = e
 
 -- 4.6.
--- app we check both and _bre2b
+-- app abs pm body arg, app check both, abs step e, ee
 applicativeStep :: DeBruijn -> DeBruijn
+applicativeStep (DBApp (DBAbs _ body) arg)
+  | isNormalForm body && isNormalForm arg = reduce arg body
 applicativeStep (DBApp e1 e2)
   | not (isNormalForm e1) = DBApp (applicativeStep e1) e2
-  | not (isNormalForm e2) = DBApp e1 (applicativeStep e2)
-  | otherwise = case e1 of
-      DBAbs _ body -> reduce e2 body
-      _ -> DBApp e1 e2
+  | otherwise = DBApp e1 (applicativeStep e2)
 applicativeStep (DBAbs x e) = DBAbs x (applicativeStep e)
 applicativeStep e = e
 
 -- 4.7.
--- infe simplify step
+-- check normal e otherwise simplify step e
 simplify :: (DeBruijn -> DeBruijn) -> DeBruijn -> [DeBruijn]
 simplify step e
   | isNormalForm e = [e]
