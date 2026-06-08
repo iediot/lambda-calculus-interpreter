@@ -1,5 +1,6 @@
 {- HLINT ignore "Use lambda-case" -}
 {- HLINT ignore "Use <$>" -}
+{-# OPTIONS_GHC -Wno-noncanonical-monad-instances #-}
 module Parser where
 
 import Control.Applicative
@@ -10,42 +11,38 @@ import Code
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
--- run the inner parser on the input
--- if Just transform the parsed value with f keeping the rest
--- if nothing propagate nothing
-instance Functor Parser where
-  fmap f (Parser p) = Parser $ \s -> case p s of
-    Just (a, rest) -> Just (f a, rest)
-    Nothing -> Nothing
-
--- pure x returns a parser that consumes nothing and yields x
--- <*> runs pf to get a function and remaining input
--- then runs pa on that remaining to get a value
--- both must succeed otherwise nothing
-instance Applicative Parser where
-  pure x = Parser $ \s -> Just (x, s)
-  Parser pf <*> Parser pa = Parser $ \s -> case pf s of
-    Nothing -> Nothing
-    Just (f, r1) -> case pa r1 of
-      Nothing -> Nothing
-      Just (a, r2) -> Just (f a, r2)
-
--- bind runs p on input
--- if it succeeded feed the parsed value to f and run the resulting parser
--- on the leftover input
+-- monad from scratch run mp on s propagate nothing on failure,
+-- otherwise feed the parsed value v to f and run the resulting parser on r
 instance Monad Parser where
-  Parser p >>= f = Parser $ \s -> case p s of
-    Nothing -> Nothing
-    Just (a, rest) -> parse (f a) rest
+  mp >>= f = Parser $ \s ->
+    case parse mp s of
+      Nothing      -> Nothing
+      Just (v, r)  -> parse (f v) r
+  return x = Parser $ \s -> Just (x, s)
 
--- empty is the parser that always fails
--- <|> tries the first parser if it succeeds keep that result
--- otherwise try the second parser on the original input
+-- applicative derived from monad
+-- pull the function f from af the value v from mp return f v
+instance Applicative Parser where
+  af <*> mp = do
+    f <- af
+    v <- mp
+    return (f v)
+  pure = return
+
+-- functor derived from monad pull x from mp return f x
+instance Functor Parser where
+  fmap f mp = do
+    x <- mp
+    return (f x)
+
+-- alternative for choice and repetition needed for some <|> empty always fails
+-- p <|> q tries p first falls back to q on the original input if p failed
 instance Alternative Parser where
   empty = Parser $ const Nothing
-  Parser p <|> Parser q = Parser $ \s -> case p s of
-    Just result -> Just result
-    Nothing -> q s
+  p <|> q = Parser $ \s ->
+    case parse p s of
+      Just result -> Just result
+      Nothing     -> parse q s
 
 -- predp go
 sat :: (Char -> Bool) -> Parser Char
