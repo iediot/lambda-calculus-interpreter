@@ -54,9 +54,10 @@ instance Alternative Parser where
 -- if it starts with a char satisfying pred consume it and return it with the rest
 -- otherwise nothing
 sat :: (Char -> Bool) -> Parser Char
-sat pred = Parser $ \s -> case s of
-  c : rest | pred c -> Just (c, rest)
-  _ -> Nothing
+sat pred = Parser go
+  where
+    go (c : rest) | pred c = Just (c, rest)
+    go _ = Nothing
 
 -- sat for equality with one specific char
 ch :: Char -> Parser Char
@@ -68,7 +69,9 @@ varName = some (sat isLower)
 
 -- some sat of isupper or isdigit
 macroName :: Parser String
-macroName = some (sat (\c -> isUpper c || isDigit c))
+macroName = some (sat isMacroChar)
+  where
+    isMacroChar c = isUpper c || isDigit c
 
 -- try parens else Var of varname else macro of macroName
 -- parens is a do block consume ( then parse a lambda then consume ) return the lambda
