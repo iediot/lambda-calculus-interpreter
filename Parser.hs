@@ -8,9 +8,6 @@ import Data.Char (isDigit, isLower, isUpper)
 import Lambda
 import Code
 
--- a Parser is a newtype wrapping a function from input string
--- to maybe a pair (parsed value, leftover string)
--- nothing means parse failure
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
 -- run the inner parser on the input

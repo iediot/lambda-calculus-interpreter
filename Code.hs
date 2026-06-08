@@ -19,9 +19,7 @@ instance Show Line where
 -- abs do block expand body then rebuild with abs x
 -- var is unchanged returned as right
 expand :: Context -> Lambda -> Either String Lambda
-expand ctx (Macro name) = case lookup name ctx of
-  Just e -> expand ctx e
-  Nothing -> Left name
+expand _ (Var x) = Right (Var x)
 expand ctx (App e1 e2) = do
   e1' <- expand ctx e1
   e2' <- expand ctx e2
@@ -29,7 +27,9 @@ expand ctx (App e1 e2) = do
 expand ctx (Abs x e) = do
   e' <- expand ctx e
   pure (Abs x e')
-expand _ (Var x) = Right (Var x)
+expand ctx (Macro name) = case lookup name ctx of
+  Just e -> expand ctx e
+  Nothing -> Left name
 
 -- 3.1.
 -- expand first then simplify
