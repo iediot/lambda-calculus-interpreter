@@ -25,11 +25,8 @@ instance Eq DeBruijn where
   _ == _ = False
 
 -- 4.1.
--- ctx is the binder names innermost first
--- var x case on elemindex x ctx just n means bound use dbvar n else dbfree x
--- app recurses on both with the same ctx
--- abs pushes binder name onto front of ctx then recurses
--- macro becomes dbfree of its name
+-- remember to use db not regular, var just and nothing, 
+-- app usual abs kinda usual macro easy
 toDB :: Context -> Lambda -> DeBruijn
 toDB ctx (Var x) = case elemIndex x ctx of
   Just n -> DBVar n
@@ -39,11 +36,8 @@ toDB ctx (Abs x e) = DBAbs x (toDB (x : ctx) e)
 toDB _ (Macro m) = DBFree m
 
 -- 4.2.
--- inverse of toDB
--- dbvar n is var of ctx !! n
--- dbfree x is var x
--- dbapp recurses on both
--- dbabs pushes name onto ctx then recurses building abs x of the result
+-- inverse of todb, again remember db
+-- ctx !! n, free, app and abs
 fromDB :: Context -> DeBruijn -> Lambda
 fromDB ctx (DBVar n) = Var (ctx !! n)
 fromDB _ (DBFree x) = Var x
@@ -51,10 +45,7 @@ fromDB ctx (DBApp e1 e2) = App (fromDB ctx e1) (fromDB ctx e2)
 fromDB ctx (DBAbs x e) = Abs x (fromDB (x : ctx) e)
 
 -- 4.3.
--- dbvar and DBFree are True
--- dbapp with dbabs on the left is false that is a redex
--- any other dbapp needs both sides in NF
--- dbabs recurses into its body
+-- dbvft, appabs false, app usual abs kinda usual
 isNormalForm :: DeBruijn -> Bool
 isNormalForm (DBVar _) = True
 isNormalForm (DBFree _) = True
@@ -62,13 +53,7 @@ isNormalForm (DBApp (DBAbs _ _) _) = False
 isNormalForm (DBApp e1 e2) = isNormalForm e1 && isNormalForm e2
 isNormalForm (DBAbs _ e) = isNormalForm e
 
--- replace index target with val inside e
--- dbvar n if n equals target return val
---        if n is bigger drop by 1 because a binder is being removed
---        otherwise leave it
--- dbfree unchanged
--- dbapp recurses on both with same target and val
--- dbabs under a new binder target grows by 1
+-- if = if >, __, app usual abs diff but easy
 subst :: Int -> DeBruijn -> DeBruijn -> DeBruijn
 subst target val (DBVar n)
   | n == target = val
@@ -79,17 +64,11 @@ subst target val (DBApp e1 e2) = DBApp (subst target val e1) (subst target val e
 subst target val (DBAbs x e) = DBAbs x (subst (target + 1) val e)
 
 -- 4.4.
--- one beta step is substitute val for index 0
--- point free reduce = subst 0
 reduce :: DeBruijn -> DeBruijn -> DeBruijn
 reduce = subst 0
 
 -- 4.5.
--- leftmost outermost
--- first clause dbapp of dbabs fires reduce arg body right away
--- next clause any dbapp if left not NF recurse left else recurse right
--- dbabs recurses into body
--- anything else returns itself
+-- _baab, app we check each, abse and ee
 normalStep :: DeBruijn -> DeBruijn
 normalStep (DBApp (DBAbs _ body) arg) = reduce arg body
 normalStep (DBApp e1 e2)
@@ -99,13 +78,7 @@ normalStep (DBAbs x e) = DBAbs x (normalStep e)
 normalStep e = e
 
 -- 4.6.
--- leftmost innermost
--- on dbapp e1 e2 three guards
---   if e1 not nf recurse e1
---   else if e2 not nf recurse e2
---   else case on e1 if dbabs fire reduce e2 body else rebuild
--- dbabs recurses into body
--- anything else returns itself
+-- app we check both and _bre2b
 applicativeStep :: DeBruijn -> DeBruijn
 applicativeStep (DBApp e1 e2)
   | not (isNormalForm e1) = DBApp (applicativeStep e1) e2
@@ -117,8 +90,7 @@ applicativeStep (DBAbs x e) = DBAbs x (applicativeStep e)
 applicativeStep e = e
 
 -- 4.7.
--- if e is in nf return e
--- else cons e onto simplify step - step e
+-- infe simplify step
 simplify :: (DeBruijn -> DeBruijn) -> DeBruijn -> [DeBruijn]
 simplify step e
   | isNormalForm e = [e]

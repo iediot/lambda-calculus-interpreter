@@ -28,10 +28,7 @@ instance Eq Lambda where
       eq _ _ _ = False
 
 -- 1.1.
--- var x is singleton list of x
--- app nub of recursing on both sides concatenated
--- abs nub of binder name cons recurse on body
--- macro is empty list
+-- for app and abs USE nub and macro is empty list
 vars :: Lambda -> [String]
 vars (Var x) = [x]
 vars (App e1 e2) = nub (vars e1 ++ vars e2)
@@ -39,8 +36,7 @@ vars (Abs x e) = nub (x : vars e)
 vars (Macro _) = []
 
 -- 1.2.
--- same shape as vars only abs differs
--- instead of including the binder remove it from the body result using \\ x
+-- abs instead remove from the body result using \\ x
 freeVars :: Lambda -> [String]
 freeVars (Var x) = [x]
 freeVars (App e1 e2) = nub (freeVars e1 ++ freeVars e2)
@@ -48,12 +44,8 @@ freeVars (Abs x e) = freeVars e \\ [x]
 freeVars (Macro _) = []
 
 -- 1.3.
--- generate every name ordered by length then alphabetical
--- take the first one not in the taken list
--- helper namesoflength 1 is each single letter wrapped as a string
--- helper namesoflength n is each letter prepended to each name of length n-1
--- allnames is the concat of namesoflength n for n from 1 upward
--- need a type sig on namesoflength so n is inferred as int not integer
+-- `notElem` !!!
+-- letters a-z, namesOfLength, and for allNames use concat
 newVar :: [String] -> String
 newVar taken = head [name | name <- allNames, name `notElem` taken]
   where
@@ -64,11 +56,7 @@ newVar taken = head [name | name <- allNames, name `notElem` taken]
     allNames = concat [namesOfLength n | n <- [1 ..]]
 
 -- 1.4.
--- 5 cases
--- var and macro are true
--- abs recurses into its body
--- app with abs on the left is false because that is a redex
--- any other app requires both sides to be in normal form
+-- var true, appabs false, app yk, abs yk, macro false
 isNormalForm :: Lambda -> Bool
 isNormalForm (Var _) = True
 isNormalForm (App (Abs _ _) _) = False
@@ -77,16 +65,7 @@ isNormalForm (Abs _ e) = isNormalForm e
 isNormalForm (Macro _) = True
 
 -- 1.5.
--- substitute e for every free x inside the second arg
--- var y returns e when x = y else var y
--- app recurses on both children
--- abs has three sub cases
---   if binder name equals x stop because x is shadowed
---   if binder y is not free in e just recurse safely
---   else pick a fresh name avoiding freeVars e ++ freeVars body ++ x
---     first rename y to fresh in body using reduce y body - var fresh
---     then recurse with the renamed body
--- macro stays as is
+-- var e or var y, app the usual i reduce, abs the big one with fresh, and _macro_
 reduce :: String -> Lambda -> Lambda -> Lambda
 reduce x (Var y) e
   | x == y = e
@@ -103,11 +82,7 @@ reduce x (Abs y body) e
 reduce _ (Macro m) _ = Macro m
 
 -- 1.6.
--- leftmost outermost
--- first clause app of abs fires the redex directly with reduce
--- next clause any app if left not in nf recurse left else recurse right
--- abs recurses into its body
--- anything else returns itself
+-- appabs, app the usual, abs and ee
 normalStep :: Lambda -> Lambda
 normalStep (App (Abs x body) arg) = reduce x body arg
 normalStep (App e1 e2)
@@ -117,13 +92,7 @@ normalStep (Abs x e) = Abs x (normalStep e)
 normalStep e = e
 
 -- 1.7.
--- leftmost innermost
--- on app e1 e2 three guards in order
---   if e1 not in nf recurse on e1
---   else if e2 not in nf recurse on e2
---   else case on e1 if it is abs fire the redex else rebuild app e1 e2
--- abs recurses into its body
--- anything else returns itself
+-- appabs but both body and arg, app as usual, abs and ee
 applicativeStep :: Lambda -> Lambda
 applicativeStep (App (Abs x body) arg)
   | isNormalForm body && isNormalForm arg = reduce x body arg
@@ -134,8 +103,7 @@ applicativeStep (Abs x e) = Abs x (applicativeStep e)
 applicativeStep e = e
 
 -- 1.8.
--- if already in nf return e
--- else cons e onto simplify step - step e
+-- infe or simplidy step
 simplify :: (Lambda -> Lambda) -> Lambda -> [Lambda]
 simplify step e
   | isNormalForm e = [e]
