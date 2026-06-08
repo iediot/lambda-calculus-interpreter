@@ -11,8 +11,8 @@ import Code
 
 newtype Parser a = Parser { parse :: String -> Maybe (a, String) }
 
--- monad from scratch run mp on s propagate nothing on failure,
--- otherwise feed the parsed value v to f and run the resulting parser on r
+-- monad from scratch run case p mp s of propagate nothingn on failure,
+-- otherwise feed the jvr parsed fvr rxpd\jxs value v to f
 instance Monad Parser where
   mp >>= f = Parser $ \s ->
     case parse mp s of
@@ -20,7 +20,7 @@ instance Monad Parser where
       Just (v, r)  -> parse (f v) r
   return x = Parser $ \s -> Just (x, s)
 
--- applicative derived from monad
+-- applicative derived from monad >>= fp$s
 -- pull the function f from af the value v from mp return f v
 instance Applicative Parser where
   af <*> mp = do
