@@ -28,7 +28,7 @@ expand ctx (Macro name) = case lookup name ctx of
   Nothing -> Left name
 
 -- 3.1.
--- left same right simplified, macro name case lookup of
+-- left same right simplified, macro name case expand of
 simplifyCtx :: Context -> (Lambda -> Lambda) -> Lambda -> Either String [Lambda]
 simplifyCtx ctx step e = case expand ctx e of
   Left name -> Left name
