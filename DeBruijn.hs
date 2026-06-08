@@ -54,7 +54,7 @@ isNormalForm (DBApp (DBAbs _ _) _) = False
 isNormalForm (DBApp e1 e2) = isNormalForm e1 && isNormalForm e2
 isNormalForm (DBAbs _ e) = isNormalForm e
 
--- if = if >, pm both free, app usual abs diff but easy
+-- if = if >, pm both free, app usual abs diff t+1 but easy
 subst :: Int -> DeBruijn -> DeBruijn -> DeBruijn
 subst target val (DBVar n)
   | n == target = val
