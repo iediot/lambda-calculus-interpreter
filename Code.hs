@@ -13,11 +13,7 @@ instance Show Line where
   show (Eval l) = show l
   show (Binding s l) = s ++ " = " ++ show l
 
--- walk the tree and replace every macro by its definition
--- macro name lookup the name in ctx if found recurse on the definition else left name
--- app do block expand both children then rebuild with app
--- abs do block expand body then rebuild with abs x
--- var is unchanged returned as right
+-- var right, app expand both, abs ab the same
 expand :: Context -> Lambda -> Either String Lambda
 expand _ (Var x) = Right (Var x)
 expand ctx (App e1 e2) = do
@@ -32,10 +28,7 @@ expand ctx (Macro name) = case lookup name ctx of
   Nothing -> Left name
 
 -- 3.1.
--- expand first then simplify
--- case on expand result
--- left passes the missing macro name through
--- right wraps simplify step expanded back in right
+-- left same right simplified, macro name case lookup of
 simplifyCtx :: Context -> (Lambda -> Lambda) -> Lambda -> Either String [Lambda]
 simplifyCtx ctx step e = case expand ctx e of
   Left name -> Left name

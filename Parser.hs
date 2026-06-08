@@ -47,31 +47,28 @@ instance Alternative Parser where
     Just result -> Just result
     Nothing -> q s
 
--- look at the input
--- if it starts with a char satisfying pred consume it and return it with the rest
--- otherwise nothing
+-- predp go
 sat :: (Char -> Bool) -> Parser Char
 sat pred = Parser go
   where
     go (c : rest) | pred c = Just (c, rest)
     go _ = Nothing
 
--- sat for equality with one specific char
+-- ch sat
 ch :: Char -> Parser Char
 ch c = sat (== c)
 
--- some sat islower gives one or more lowercase letters
+-- sat iL
 varName :: Parser String
 varName = some (sat isLower)
 
--- some sat of isupper or isdigit
+-- sat iMC w iU/iD
 macroName :: Parser String
 macroName = some (sat isMacroChar)
   where
     isMacroChar c = isUpper c || isDigit c
 
--- try parens else Var of varname else macro of macroName
--- parens is a do block consume ( then parse a lambda then consume ) return the lambda
+-- |$|$| (lambda) pure
 atom :: Parser Lambda
 atom = parens <|> (Var <$> varName) <|> (Macro <$> macroName)
   where
@@ -81,16 +78,14 @@ atom = parens <|> (Var <$> varName) <|> (Macro <$> macroName)
       _ <- ch ')'
       pure e
 
--- do block parse one atom then many of (space then atom)
--- foldl app over them so x y z becomes app (app x y) z
+-- st f  foldl fr
 app :: Parser Lambda
 app = do
   first <- atom
   rest <- many (ch ' ' >> atom)
   pure (foldl App first rest)
 
--- do block consume \ then varname then . then parse a lambda body
--- return abs of the var name and body
+-- \\ v . bl
 abst :: Parser Lambda
 abst = do
   _ <- ch '\\'
@@ -99,24 +94,19 @@ abst = do
   body <- lambda
   pure (Abs v body)
 
--- a lambda is an abst or an app
+-- abstr or app
 lambda :: Parser Lambda
 lambda = abst <|> app
 
 -- 2.1. / 3.2.
--- run parse lambda on the input
--- if it consumed everything return the parsed lambda
--- otherwise error
+-- ret parsed lambda or parse error
 parseLambda :: String -> Lambda
 parseLambda s = case parse lambda s of
   Just (e, "") -> e
   _ -> error "parse error"
 
 -- 3.3.
--- a line is a binding or an eval of a lambda
--- binding is a do block macroName then = then a lambda body return binding name body
--- if parse succeeds with no leftover return right of the line
--- otherwise left of the input string
+-- case parse line s rlls 
 parseLine :: String -> Either String Line
 parseLine s = case parse line s of
   Just (l, "") -> Right l
