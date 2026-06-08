@@ -90,7 +90,7 @@ applicativeStep (DBAbs x e) = DBAbs x (applicativeStep e)
 applicativeStep e = e
 
 -- 4.7.
--- check normal e otherwise simplify step e
+-- check normal e otherwise e simplify step e
 simplify :: (DeBruijn -> DeBruijn) -> DeBruijn -> [DeBruijn]
 simplify step e
   | isNormalForm e = [e]
